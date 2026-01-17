@@ -58,6 +58,7 @@ export interface CreateBookingDTO {
   customerName: string;
   customerEmail?: string;
   notes?: string;
+  promoCode?: string; // Promo code string (e.g., "WELCOME20")
 }
 
 export interface CreateManualBookingDTO {

@@ -162,7 +162,9 @@ export const calculatePrice = asyncHandler(
     const { bookingDate, startTime, endTime } = req.body;
 
     if (!bookingDate || !startTime || !endTime) {
-      throw new BadRequestError("Booking date, start time, and end time are required");
+      throw new BadRequestError(
+        "Booking date, start time, and end time are required"
+      );
     }
 
     const result = await PricingService.calculateBookingPrice(

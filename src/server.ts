@@ -7,6 +7,7 @@ import courtRoutes from "./routes/court.routes";
 import customerRoutes from "./routes/customer.routes";
 import pricingRoutes from "./routes/pricing.routes";
 import bookingRoutes from "./routes/booking.routes";
+import promoCodeRoutes from "./routes/promoCode.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 // Load environment variables
 dotenv.config();
@@ -74,6 +75,7 @@ app.use("/api/courts", courtRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/pricing", pricingRoutes);
 app.use("/api/bookings", bookingRoutes);
+app.use("/api/promo-codes", promoCodeRoutes);
 
 // 404 handler (must be after all routes)
 app.use(notFound);
@@ -192,6 +194,29 @@ const startServer = async () => {
       );
       console.log(
         `   PUT    http://localhost:${PORT}/api/bookings/:id (Protected)`
+      );
+      console.log("");
+      console.log("Promo Code Management:");
+      console.log(
+        `   POST   http://localhost:${PORT}/api/promo-codes/validate (Public)`
+      );
+      console.log(
+        `   GET    http://localhost:${PORT}/api/promo-codes (Protected)`
+      );
+      console.log(
+        `   GET    http://localhost:${PORT}/api/promo-codes/:id (Protected)`
+      );
+      console.log(
+        `   POST   http://localhost:${PORT}/api/promo-codes (Protected)`
+      );
+      console.log(
+        `   PUT    http://localhost:${PORT}/api/promo-codes/:id (Protected)`
+      );
+      console.log(
+        `   PATCH  http://localhost:${PORT}/api/promo-codes/:id/toggle (Protected)`
+      );
+      console.log(
+        `   DELETE http://localhost:${PORT}/api/promo-codes/:id (Protected)`
       );
       console.log("");
     });

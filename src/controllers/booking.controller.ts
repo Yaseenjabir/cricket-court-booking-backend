@@ -10,6 +10,7 @@ import {
 } from "../utils/ApiError";
 import { BookingService } from "../services/booking.service";
 import { PricingService } from "../services/pricing.service";
+import { PromoCodeService } from "../services/promoCode.service";
 import {
   CreateBookingDTO,
   CreateManualBookingDTO,
@@ -69,6 +70,7 @@ export const createBooking = asyncHandler(
       customerName,
       customerEmail,
       notes,
+      promoCode,
     } = req.body as CreateBookingDTO;
 
     // Validate required fields
@@ -133,6 +135,27 @@ export const createBooking = asyncHandler(
       endTime
     );
 
+    // Apply promo code if provided
+    let promoCodeId: string | undefined;
+    let discountAmount = 0;
+    let finalPrice = pricingResult.finalPrice;
+
+    if (promoCode) {
+      const promoValidation = await PromoCodeService.validatePromoCode(
+        promoCode,
+        customer._id.toString(),
+        pricingResult.finalPrice
+      );
+
+      if (promoValidation.valid && promoValidation.promoCodeId) {
+        promoCodeId = promoValidation.promoCodeId;
+        discountAmount = promoValidation.discount || 0;
+        finalPrice = promoValidation.finalAmount || pricingResult.finalPrice;
+      }
+      // If promo code is invalid, we just ignore it (no error thrown)
+      // Booking proceeds without discount
+    }
+
     // Create booking
     const booking = await Booking.create({
       customer: customer._id,
@@ -143,14 +166,20 @@ export const createBooking = asyncHandler(
       durationHours,
       totalPrice: pricingResult.finalPrice,
       pricingBreakdown: pricingResult.breakdown,
-      discountAmount: 0,
-      finalPrice: pricingResult.finalPrice,
+      promoCode: promoCodeId,
+      discountAmount,
+      finalPrice,
       paymentStatus: "pending",
       amountPaid: 0,
       status: "pending",
       notes,
       createdBy: "customer",
     });
+
+    // Mark promo code as used if applied
+    if (promoCodeId) {
+      await PromoCodeService.markAsUsed(promoCodeId, customer._id.toString());
+    }
 
     // Increment customer's total bookings
     await Customer.findByIdAndUpdate(customer._id, {
@@ -160,7 +189,8 @@ export const createBooking = asyncHandler(
     // Populate references for response
     const populatedBooking = await Booking.findById(booking._id)
       .populate("customer", "name phone email")
-      .populate("court", "name description");
+      .populate("court", "name description")
+      .populate("promoCode", "code discountType discountValue");
 
     res.status(201).json({
       success: true,
@@ -539,9 +569,18 @@ export const cancelBooking = asyncHandler(
     }
     await booking.save();
 
+    // Remove promo code usage if it was used
+    if (booking.promoCode && booking.customer) {
+      await PromoCodeService.removeUsage(
+        booking.promoCode.toString(),
+        booking.customer.toString()
+      );
+    }
+
     const populatedBooking = await Booking.findById(booking._id)
       .populate("customer", "name phone email")
-      .populate("court", "name description");
+      .populate("court", "name description")
+      .populate("promoCode", "code discountType discountValue");
 
     res.json({
       success: true,
