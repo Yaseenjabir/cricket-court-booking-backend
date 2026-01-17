@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes";
 import courtRoutes from "./routes/court.routes";
 import customerRoutes from "./routes/customer.routes";
 import pricingRoutes from "./routes/pricing.routes";
+import bookingRoutes from "./routes/booking.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 // Load environment variables
 dotenv.config();
@@ -72,6 +73,7 @@ app.use("/api/auth", authRoutes);
 app.use("/api/courts", courtRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/pricing", pricingRoutes);
+app.use("/api/bookings", bookingRoutes);
 
 // 404 handler (must be after all routes)
 app.use(notFound);
@@ -163,6 +165,33 @@ const startServer = async () => {
       );
       console.log(
         `   DELETE http://localhost:${PORT}/api/pricing/:id (Protected)`
+      );
+      console.log("");
+      console.log("Booking Management:");
+      console.log(
+        `   POST   http://localhost:${PORT}/api/bookings/check-availability (Public)`
+      );
+      console.log(`   POST   http://localhost:${PORT}/api/bookings (Public)`);
+      console.log(
+        `   GET    http://localhost:${PORT}/api/bookings/:id (Public)`
+      );
+      console.log(
+        `   PATCH  http://localhost:${PORT}/api/bookings/:id/cancel (Public)`
+      );
+      console.log(
+        `   GET    http://localhost:${PORT}/api/bookings (Protected)`
+      );
+      console.log(
+        `   POST   http://localhost:${PORT}/api/bookings/manual (Protected)`
+      );
+      console.log(
+        `   PATCH  http://localhost:${PORT}/api/bookings/:id/status (Protected)`
+      );
+      console.log(
+        `   PATCH  http://localhost:${PORT}/api/bookings/:id/payment (Protected)`
+      );
+      console.log(
+        `   PUT    http://localhost:${PORT}/api/bookings/:id (Protected)`
       );
       console.log("");
     });

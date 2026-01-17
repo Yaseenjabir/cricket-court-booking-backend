@@ -1,0 +1,30 @@
+import express from "express";
+import {
+  checkAvailability,
+  createBooking,
+  createManualBooking,
+  getAllBookings,
+  getBookingById,
+  updateBookingStatus,
+  updatePayment,
+  updateBooking,
+  cancelBooking,
+} from "../controllers/booking.controller";
+import { authenticate, requireAdmin } from "../middleware/auth.middleware";
+
+const router = express.Router();
+
+// Public routes
+router.post("/check-availability", checkAvailability);
+router.post("/", createBooking);
+router.get("/:id", getBookingById);
+router.patch("/:id/cancel", cancelBooking); // Public - customer can cancel
+
+// Protected routes (Admin only)
+router.get("/", authenticate, requireAdmin, getAllBookings);
+router.post("/manual", authenticate, requireAdmin, createManualBooking);
+router.patch("/:id/status", authenticate, requireAdmin, updateBookingStatus);
+router.patch("/:id/payment", authenticate, requireAdmin, updatePayment);
+router.put("/:id", authenticate, requireAdmin, updateBooking);
+
+export default router;

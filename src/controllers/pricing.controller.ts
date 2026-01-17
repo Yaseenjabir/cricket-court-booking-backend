@@ -159,25 +159,21 @@ export const initializePricingRules = asyncHandler(
 // Calculate price for booking (public endpoint)
 export const calculatePrice = asyncHandler(
   async (req: Request, res: Response) => {
-    const { startTime, endTime } = req.body;
+    const { bookingDate, startTime, endTime } = req.body;
 
-    if (!startTime || !endTime) {
-      throw new BadRequestError("Start time and end time are required");
+    if (!bookingDate || !startTime || !endTime) {
+      throw new BadRequestError("Booking date, start time, and end time are required");
     }
 
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-
-    // Validate dates
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      throw new BadRequestError("Invalid date format");
-    }
-
-    const pricePreview = await PricingService.getPricePreview(start, end);
+    const result = await PricingService.calculateBookingPrice(
+      bookingDate,
+      startTime,
+      endTime
+    );
 
     res.json({
       success: true,
-      data: pricePreview,
+      data: result,
     });
   }
 );

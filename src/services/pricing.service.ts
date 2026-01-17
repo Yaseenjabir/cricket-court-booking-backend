@@ -109,18 +109,47 @@ export class PricingService {
 
   /**
    * Calculate booking price with detailed breakdown
+   * @param bookingDate - Date object or string for the booking date
+   * @param startTime - Time string in HH:MM format (e.g., "18:00")
+   * @param endTime - Time string in HH:MM format (e.g., "20:00")
    */
   static async calculateBookingPrice(
-    courtId: string,
-    startTime: Date,
-    endTime: Date
-  ): Promise<IPriceCalculation> {
-    // Validate times
-    if (startTime >= endTime) {
-      throw new BadRequestError("End time must be after start time");
+    bookingDate: Date | string,
+    startTime: string,
+    endTime: string
+  ): Promise<{
+    totalHours: number;
+    breakdown: Array<{
+      hour: string;
+      rate: number;
+      dayType: "weekday" | "weekend";
+      timeSlot: "day" | "night";
+    }>;
+    finalPrice: number;
+  }> {
+    // Parse date
+    const dateObj =
+      typeof bookingDate === "string" ? new Date(bookingDate) : bookingDate;
+    dateObj.setHours(0, 0, 0, 0);
+
+    // Parse times
+    const [startHour, startMinute] = startTime.split(":").map(Number);
+    const [endHour, endMinute] = endTime.split(":").map(Number);
+
+    // Create full datetime objects
+    const startDateTime = new Date(dateObj);
+    startDateTime.setHours(startHour, startMinute, 0, 0);
+
+    const endDateTime = new Date(dateObj);
+    endDateTime.setHours(endHour, endMinute, 0, 0);
+
+    // Handle midnight crossing (e.g., 23:00 to 02:00)
+    if (endDateTime <= startDateTime) {
+      endDateTime.setDate(endDateTime.getDate() + 1);
     }
 
-    const totalMilliseconds = endTime.getTime() - startTime.getTime();
+    // Validate times
+    const totalMilliseconds = endDateTime.getTime() - startDateTime.getTime();
     const totalHours = totalMilliseconds / (1000 * 60 * 60);
 
     // Check minimum 1 hour
@@ -136,17 +165,22 @@ export class PricingService {
       );
     }
 
-    const breakdown: ITimeSlotPrice[] = [];
-    let currentTime = new Date(startTime);
-    let subtotal = 0;
+    const breakdown: Array<{
+      hour: string;
+      rate: number;
+      dayType: "weekday" | "weekend";
+      timeSlot: "day" | "night";
+    }> = [];
+    let currentTime = new Date(startDateTime);
+    let totalPrice = 0;
 
     // Calculate price for each hour
-    while (currentTime < endTime) {
+    while (currentTime < endDateTime) {
       const nextHour = new Date(currentTime);
       nextHour.setHours(nextHour.getHours() + 1);
 
       // Don't go beyond end time
-      const slotEnd = nextHour > endTime ? endTime : nextHour;
+      const slotEnd = nextHour > endDateTime ? endDateTime : nextHour;
       const slotDuration =
         (slotEnd.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
 
@@ -156,14 +190,20 @@ export class PricingService {
       );
 
       const slotPrice = price * slotDuration;
-      subtotal += slotPrice;
+      totalPrice += slotPrice;
+
+      // Format hour range for breakdown
+      const startStr = `${String(currentTime.getHours()).padStart(
+        2,
+        "0"
+      )}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
+      const endStr = `${String(slotEnd.getHours()).padStart(2, "0")}:${String(
+        slotEnd.getMinutes()
+      ).padStart(2, "0")}`;
 
       breakdown.push({
-        startTime: new Date(currentTime),
-        endTime: new Date(slotEnd),
-        hours: slotDuration,
-        pricePerHour: price,
-        totalPrice: slotPrice,
+        hour: `${startStr}-${endStr}`,
+        rate: price,
         dayType,
         timeSlot,
       });
@@ -172,38 +212,9 @@ export class PricingService {
     }
 
     return {
-      courtId,
-      startTime,
-      endTime,
       totalHours,
       breakdown,
-      subtotal,
-      discount: 0, // Will be calculated with promo code later
-      finalPrice: subtotal,
-    };
-  }
-
-  /**
-   * Get price preview for frontend (without saving)
-   */
-  static async getPricePreview(
-    startTime: Date,
-    endTime: Date
-  ): Promise<{
-    totalHours: number;
-    estimatedPrice: number;
-    breakdown: ITimeSlotPrice[];
-  }> {
-    const calculation = await this.calculateBookingPrice(
-      "preview",
-      startTime,
-      endTime
-    );
-
-    return {
-      totalHours: calculation.totalHours,
-      estimatedPrice: calculation.finalPrice,
-      breakdown: calculation.breakdown,
+      finalPrice: totalPrice,
     };
   }
 }
