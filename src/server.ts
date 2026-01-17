@@ -6,6 +6,7 @@ import authRoutes from "./routes/auth.routes";
 import courtRoutes from "./routes/court.routes";
 import uploadRoutes from "./routes/upload.routes";
 import customerRoutes from "./routes/customer.routes";
+import pricingRoutes from "./routes/pricing.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 // Load environment variables
 dotenv.config();
@@ -14,7 +15,10 @@ dotenv.config();
 console.log("🔧 Environment Variables Check:");
 console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
 console.log("CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY);
-console.log("CLOUDINARY_API_SECRET:", process.env.CLOUDINARY_API_SECRET ? "***set***" : "undefined");
+console.log(
+  "CLOUDINARY_API_SECRET:",
+  process.env.CLOUDINARY_API_SECRET ? "***set***" : "undefined"
+);
 
 // Create Express app
 const app = express();
@@ -68,6 +72,7 @@ app.get("/api/test", (req: Request, res: Response) => {
 app.use("/api/auth", authRoutes);
 app.use("/api/courts", courtRoutes);
 app.use("/api/customers", customerRoutes);
+app.use("/api/pricing", pricingRoutes);
 app.use("/api/upload", uploadRoutes);
 
 // 404 handler (must be after all routes)
@@ -141,6 +146,25 @@ const startServer = async () => {
       );
       console.log(
         `   DELETE http://localhost:${PORT}/api/customers/:id (Protected)`
+      );
+      console.log("");
+      console.log("Pricing & Calculation:");
+      console.log(
+        `   POST   http://localhost:${PORT}/api/pricing/calculate (Public)`
+      );
+      console.log(`   GET    http://localhost:${PORT}/api/pricing (Protected)`);
+      console.log(
+        `   POST   http://localhost:${PORT}/api/pricing/initialize (Protected)`
+      );
+      console.log(
+        `   GET    http://localhost:${PORT}/api/pricing/:id (Protected)`
+      );
+      console.log(`   POST   http://localhost:${PORT}/api/pricing (Protected)`);
+      console.log(
+        `   PUT    http://localhost:${PORT}/api/pricing/:id (Protected)`
+      );
+      console.log(
+        `   DELETE http://localhost:${PORT}/api/pricing/:id (Protected)`
       );
       console.log("");
       console.log("Image Upload:");
