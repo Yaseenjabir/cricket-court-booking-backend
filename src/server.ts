@@ -5,6 +5,7 @@ import { connectDatabase } from "./config/database";
 import authRoutes from "./routes/auth.routes";
 import courtRoutes from "./routes/court.routes";
 import uploadRoutes from "./routes/upload.routes";
+import customerRoutes from "./routes/customer.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 // Load environment variables
 dotenv.config();
@@ -66,6 +67,7 @@ app.get("/api/test", (req: Request, res: Response) => {
 // API Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/courts", courtRoutes);
+app.use("/api/customers", customerRoutes);
 app.use("/api/upload", uploadRoutes);
 
 // 404 handler (must be after all routes)
@@ -116,6 +118,29 @@ const startServer = async () => {
       );
       console.log(
         `   PATCH  http://localhost:${PORT}/api/courts/:id/status (Protected)`
+      );
+      console.log("");
+      console.log("Customer Management:");
+      console.log(
+        `   GET    http://localhost:${PORT}/api/customers/phone/:phone (Public)`
+      );
+      console.log(
+        `   POST   http://localhost:${PORT}/api/customers/find-or-create (Public)`
+      );
+      console.log(
+        `   GET    http://localhost:${PORT}/api/customers (Protected)`
+      );
+      console.log(
+        `   GET    http://localhost:${PORT}/api/customers/:id (Protected)`
+      );
+      console.log(
+        `   POST   http://localhost:${PORT}/api/customers (Protected)`
+      );
+      console.log(
+        `   PUT    http://localhost:${PORT}/api/customers/:id (Protected)`
+      );
+      console.log(
+        `   DELETE http://localhost:${PORT}/api/customers/:id (Protected)`
       );
       console.log("");
       console.log("Image Upload:");
