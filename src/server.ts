@@ -4,7 +4,6 @@ import dotenv from "dotenv";
 import { connectDatabase } from "./config/database";
 import authRoutes from "./routes/auth.routes";
 import courtRoutes from "./routes/court.routes";
-import uploadRoutes from "./routes/upload.routes";
 import customerRoutes from "./routes/customer.routes";
 import pricingRoutes from "./routes/pricing.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
@@ -73,7 +72,6 @@ app.use("/api/auth", authRoutes);
 app.use("/api/courts", courtRoutes);
 app.use("/api/customers", customerRoutes);
 app.use("/api/pricing", pricingRoutes);
-app.use("/api/upload", uploadRoutes);
 
 // 404 handler (must be after all routes)
 app.use(notFound);
@@ -165,14 +163,6 @@ const startServer = async () => {
       );
       console.log(
         `   DELETE http://localhost:${PORT}/api/pricing/:id (Protected)`
-      );
-      console.log("");
-      console.log("Image Upload:");
-      console.log(
-        `   POST   http://localhost:${PORT}/api/upload/court-image (Protected)`
-      );
-      console.log(
-        `   DELETE http://localhost:${PORT}/api/upload/court-image (Protected)`
       );
       console.log("");
     });
