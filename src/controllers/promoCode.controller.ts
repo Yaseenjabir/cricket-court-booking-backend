@@ -125,7 +125,7 @@ export const getPromoCodeById = asyncHandler(
  */
 export const createPromoCode = asyncHandler(
   async (req: Request, res: Response) => {
-    const { code, discountType, discountValue, maxTotalUses } =
+    const { code, discountType, discountValue, maxTotalUses, expiry } =
       req.body as IPromoCodeCreate;
 
     // Validate required fields
@@ -151,9 +151,10 @@ export const createPromoCode = asyncHandler(
       throw new ConflictError("Promo code already exists");
     }
 
-    // Calculate expiry date (7 days from now)
+    // Calculate expiry date based on provided days (default: 7 days)
+    const expiryDays = expiry && expiry > 0 ? expiry : 7;
     const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
+    expiresAt.setDate(expiresAt.getDate() + expiryDays);
 
     // Create promo code
     const promoCode = await PromoCode.create({

@@ -17,6 +17,7 @@ export interface IPromoCodeCreate {
   discountType: DiscountType;
   discountValue: number;
   maxTotalUses?: number | null;
+  expiry?: number; // Number of days until expiration (default: 7)
 }
 
 export interface IPromoCodeUpdate {

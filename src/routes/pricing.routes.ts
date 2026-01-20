@@ -7,12 +7,14 @@ import {
   deletePricingRule,
   initializePricingRules,
   calculatePrice,
+  getCurrentPricing,
 } from "../controllers/pricing.controller";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
 
 const router = express.Router();
 
 // Public routes (for booking flow)
+router.get("/current", getCurrentPricing);
 router.post("/calculate", calculatePrice);
 
 // Protected admin routes

@@ -179,3 +179,38 @@ export const calculatePrice = asyncHandler(
     });
   }
 );
+
+// Get current pricing (public endpoint for customers)
+export const getCurrentPricing = asyncHandler(
+  async (req: Request, res: Response) => {
+    const pricingRules = await PricingRule.find().sort({
+      dayType: 1,
+      timeSlot: 1,
+    });
+
+    // Format into a simple structure for frontend
+    const pricing = {
+      weekdayDayRate: 0,
+      weekdayNightRate: 0,
+      weekendDayRate: 0,
+      weekendNightRate: 0,
+    };
+
+    pricingRules.forEach((rule) => {
+      if (rule.dayType === "weekday" && rule.timeSlot === "day") {
+        pricing.weekdayDayRate = rule.pricePerHour;
+      } else if (rule.dayType === "weekday" && rule.timeSlot === "night") {
+        pricing.weekdayNightRate = rule.pricePerHour;
+      } else if (rule.dayType === "weekend" && rule.timeSlot === "day") {
+        pricing.weekendDayRate = rule.pricePerHour;
+      } else if (rule.dayType === "weekend" && rule.timeSlot === "night") {
+        pricing.weekendNightRate = rule.pricePerHour;
+      }
+    });
+
+    res.json({
+      success: true,
+      data: pricing,
+    });
+  }
+);
