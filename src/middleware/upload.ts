@@ -1,8 +1,20 @@
 import multer from "multer";
+import { CloudinaryStorage } from "multer-storage-cloudinary";
+import cloudinary from "../config/cloudinary";
 import { BadRequestError } from "../utils/ApiError";
 
-// Configure multer for memory storage (temporary)
-const storage = multer.memoryStorage();
+// Configure Cloudinary storage (uploads directly to Cloudinary)
+const storage = new CloudinaryStorage({
+  cloudinary: cloudinary,
+  params: {
+    folder: "cricket-courts",
+    allowed_formats: ["jpg", "jpeg", "png", "webp"],
+    transformation: [
+      { width: 1200, height: 800, crop: "limit" },
+      { quality: "auto" },
+    ],
+  } as any,
+});
 
 // File filter for images only
 const fileFilter = (req: any, file: Express.Multer.File, cb: any) => {

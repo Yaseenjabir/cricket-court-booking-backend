@@ -86,22 +86,9 @@ export const createCourt = asyncHandler(async (req: Request, res: Response) => {
     throw new ConflictError("Court with this name already exists");
   }
 
-  // Upload image to Cloudinary AFTER all validations pass
+  // Get Cloudinary URL (already uploaded via CloudinaryStorage)
   if (req.file) {
-    const b64 = Buffer.from(req.file.buffer).toString("base64");
-    const dataURI = `data:${req.file.mimetype};base64,${b64}`;
-
-    const result = await cloudinary.uploader.upload(dataURI, {
-      folder: "cricket-courts",
-      resource_type: "image",
-      transformation: [
-        { width: 1200, height: 800, crop: "limit" },
-        { quality: "auto" },
-        { fetch_format: "auto" },
-      ],
-    });
-
-    courtData.imageUrl = result.secure_url;
+    courtData.imageUrl = (req.file as any).path;
   }
 
   const court = await Court.create(courtData);
