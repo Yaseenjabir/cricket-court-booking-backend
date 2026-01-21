@@ -17,8 +17,10 @@ const customerSchema = new Schema<ICustomerDocument>(
       trim: true,
       validate: {
         validator: function (v: string) {
-          // Saudi phone number validation (05xxxxxxxx or +9665xxxxxxxx)
-          return /^(05\d{8}|(\+9665)\d{8})$/.test(v);
+          // Saudi phone number validation (mobile or landline)
+          // Mobile: 05xxxxxxxx or +9665xxxxxxxx
+          // Landline: +9661xxxxxxxx (where 1 can be 1-9 for different regions)
+          return /^(05\d{8}|(\+966)(5|1[1-9])\d{7,8})$/.test(v);
         },
         message: "Please enter a valid Saudi phone number",
       },

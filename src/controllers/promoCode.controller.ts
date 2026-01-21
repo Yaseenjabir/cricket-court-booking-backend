@@ -12,18 +12,19 @@ import { PromoCodeService } from "../services/promoCode.service";
 /**
  * Validate promo code (public endpoint)
  * Used during booking flow to check if code is valid
+ * Uses customer phone for validation (supports guest bookings)
  */
 export const validatePromoCode = asyncHandler(
   async (req: Request, res: Response) => {
-    const { code, customerId, bookingAmount } = req.body as ValidatePromoCodeDTO;
+    const { code, customerPhone, bookingAmount } = req.body as ValidatePromoCodeDTO;
 
-    if (!code || !customerId || !bookingAmount) {
-      throw new BadRequestError("Code, customer ID, and booking amount are required");
+    if (!code || !customerPhone || !bookingAmount) {
+      throw new BadRequestError("Code, customer phone, and booking amount are required");
     }
 
     const result = await PromoCodeService.validatePromoCode(
       code,
-      customerId,
+      customerPhone,
       bookingAmount
     );
 

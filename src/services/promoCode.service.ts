@@ -1,14 +1,16 @@
 import PromoCode from "../models/PromoCode";
+import Customer from "../models/Customer";
 import { PromoCodeValidationResult } from "../types/promoCode.types";
 import { BadRequestError, NotFoundError } from "../utils/ApiError";
 
 export class PromoCodeService {
   /**
-   * Validate promo code for a booking
+   * Validate promo code for a booking using customer phone
+   * This allows validation before customer record is created (guest booking)
    */
   static async validatePromoCode(
     code: string,
-    customerId: string,
+    customerPhone: string,
     bookingAmount: number
   ): Promise<PromoCodeValidationResult> {
     // Find promo code (case-insensitive)
@@ -40,7 +42,10 @@ export class PromoCodeService {
     }
 
     // Check 3: Has customer already used it?
-    if (promoCode.usedByCustomers.includes(customerId)) {
+    // Find customer by phone to check if they've used this promo before
+    const existingCustomer = await Customer.findOne({ phone: customerPhone });
+    
+    if (existingCustomer && promoCode.usedByCustomers.includes(existingCustomer._id.toString())) {
       return {
         valid: false,
         message: "You have already used this promo code",

@@ -30,7 +30,7 @@ export interface IPromoCodeUpdate {
 
 export interface ValidatePromoCodeDTO {
   code: string;
-  customerId: string;
+  customerPhone: string; // Changed from customerId to support guest bookings
   bookingAmount: number;
 }
 
