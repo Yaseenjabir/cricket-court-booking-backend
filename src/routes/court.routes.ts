@@ -22,13 +22,14 @@ router.post(
   authenticate,
   requireAdmin,
   upload.single("image"),
-  createCourt
+  createCourt,
 );
 router.put(
   "/:id",
   authenticate,
   requireAdmin,
-  updateCourt
+  upload.single("image"),
+  updateCourt,
 );
 router.delete("/:id", authenticate, requireAdmin, deleteCourt);
 router.patch("/:id/status", authenticate, requireAdmin, toggleCourtStatus);

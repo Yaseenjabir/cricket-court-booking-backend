@@ -29,7 +29,7 @@ export const getAllCourts = asyncHandler(
       count: courts.length,
       data: courts,
     });
-  }
+  },
 );
 
 // Get single court by ID
@@ -47,7 +47,7 @@ export const getCourtById = asyncHandler(
       success: true,
       data: court,
     });
-  }
+  },
 );
 
 // Create new court
@@ -60,7 +60,7 @@ export const createCourt = asyncHandler(async (req: Request, res: Response) => {
       courtData.features = JSON.parse(courtData.features);
     } catch (error) {
       throw new BadRequestError(
-        "Invalid features format. Must be a valid JSON array"
+        "Invalid features format. Must be a valid JSON array",
       );
     }
   }
@@ -111,7 +111,7 @@ export const updateCourt = asyncHandler(async (req: Request, res: Response) => {
       updateData.features = JSON.parse(updateData.features);
     } catch (error) {
       throw new BadRequestError(
-        "Invalid features format. Must be a valid JSON array"
+        "Invalid features format. Must be a valid JSON array",
       );
     }
   }
@@ -135,6 +135,29 @@ export const updateCourt = asyncHandler(async (req: Request, res: Response) => {
   // If description is being updated, validate it
   if (updateData.description !== undefined && !updateData.description.trim()) {
     throw new BadRequestError("Court description cannot be empty");
+  }
+
+  if (req.file) {
+    // Get the old court to delete old image from Cloudinary
+    const oldCourt = await Court.findById(id);
+
+    if (oldCourt && oldCourt.imageUrl) {
+      // Extract public_id from old Cloudinary URL
+      const urlParts = oldCourt.imageUrl.split("/");
+      const publicIdWithExtension = urlParts[urlParts.length - 1];
+      const publicId = `cricket-courts/${publicIdWithExtension.split(".")[0]}`;
+
+      try {
+        // Delete old image from Cloudinary
+        await cloudinary.uploader.destroy(publicId);
+      } catch (error) {
+        console.error("Error deleting old image from Cloudinary:", error);
+        // Continue even if deletion fails
+      }
+    }
+
+    // Set new image URL from uploaded file
+    updateData.imageUrl = (req.file as any).path;
   }
 
   const court = await Court.findByIdAndUpdate(id, updateData, {
@@ -178,7 +201,7 @@ export const toggleCourtStatus = asyncHandler(
 
     if (!["active", "inactive", "maintenance"].includes(status)) {
       throw new BadRequestError(
-        "Invalid status. Must be: active, inactive, or maintenance"
+        "Invalid status. Must be: active, inactive, or maintenance",
       );
     }
 
@@ -193,5 +216,5 @@ export const toggleCourtStatus = asyncHandler(
       message: `Court status changed to ${status}`,
       data: court,
     });
-  }
+  },
 );
