@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { connectDatabase } from "./config/database";
+import { EmailService } from "./services/email.service";
 import authRoutes from "./routes/auth.routes";
 import courtRoutes from "./routes/court.routes";
 import customerRoutes from "./routes/customer.routes";
@@ -11,15 +12,6 @@ import promoCodeRoutes from "./routes/promoCode.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 // Load environment variables
 dotenv.config();
-
-// Debug: Log Cloudinary credentials
-console.log("🔧 Environment Variables Check:");
-console.log("CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME);
-console.log("CLOUDINARY_API_KEY:", process.env.CLOUDINARY_API_KEY);
-console.log(
-  "CLOUDINARY_API_SECRET:",
-  process.env.CLOUDINARY_API_SECRET ? "***set***" : "undefined"
-);
 
 // Create Express app
 const app = express();
@@ -36,7 +28,7 @@ app.use(
       "https://jeddahcricketnets.com", // Production frontend (without www)
     ],
     credentials: true,
-  })
+  }),
 );
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -95,136 +87,17 @@ const startServer = async () => {
     // Connect to database
     await connectDatabase();
 
+    // Test email service connection
+    console.log("\n📧 Testing email service...");
+    await EmailService.testConnection();
+
     // Start listening
     app.listen(PORT, () => {
-      console.log("");
       console.log("🚀 =================================");
       console.log(`🏏 Cricket Booking API Server`);
       console.log(`📡 Running on: http://localhost:${PORT}`);
       console.log(`🌍 Environment: ${process.env.NODE_ENV || "development"}`);
       console.log("🚀 =================================");
-      console.log("");
-      console.log("Available endpoints:");
-      console.log(`   GET  http://localhost:${PORT}/`);
-      console.log(`   GET  http://localhost:${PORT}/api/health`);
-      console.log(`   GET  http://localhost:${PORT}/api/test`);
-      console.log("");
-      console.log("Authentication:");
-      console.log(`   POST   http://localhost:${PORT}/api/auth/register`);
-      console.log(`   POST   http://localhost:${PORT}/api/auth/login`);
-      console.log(
-        `   GET    http://localhost:${PORT}/api/auth/profile (Protected)`
-      );
-      console.log(
-        `   GET    http://localhost:${PORT}/api/auth/verify (Protected)`
-      );
-      console.log("");
-      console.log("Court Management:");
-      console.log(`   GET    http://localhost:${PORT}/api/courts (Public)`);
-      console.log(`   GET    http://localhost:${PORT}/api/courts/:id (Public)`);
-      console.log(`   POST   http://localhost:${PORT}/api/courts (Protected)`);
-      console.log(
-        `   PUT    http://localhost:${PORT}/api/courts/:id (Protected)`
-      );
-      console.log(
-        `   DELETE http://localhost:${PORT}/api/courts/:id (Protected)`
-      );
-      console.log(
-        `   PATCH  http://localhost:${PORT}/api/courts/:id/status (Protected)`
-      );
-      console.log("");
-      console.log("Customer Management:");
-      console.log(
-        `   GET    http://localhost:${PORT}/api/customers/phone/:phone (Public)`
-      );
-      console.log(
-        `   POST   http://localhost:${PORT}/api/customers/find-or-create (Public)`
-      );
-      console.log(
-        `   GET    http://localhost:${PORT}/api/customers (Protected)`
-      );
-      console.log(
-        `   GET    http://localhost:${PORT}/api/customers/:id (Protected)`
-      );
-      console.log(
-        `   POST   http://localhost:${PORT}/api/customers (Protected)`
-      );
-      console.log(
-        `   PUT    http://localhost:${PORT}/api/customers/:id (Protected)`
-      );
-      console.log(
-        `   DELETE http://localhost:${PORT}/api/customers/:id (Protected)`
-      );
-      console.log("");
-      console.log("Pricing & Calculation:");
-      console.log(
-        `   POST   http://localhost:${PORT}/api/pricing/calculate (Public)`
-      );
-      console.log(`   GET    http://localhost:${PORT}/api/pricing (Protected)`);
-      console.log(
-        `   POST   http://localhost:${PORT}/api/pricing/initialize (Protected)`
-      );
-      console.log(
-        `   GET    http://localhost:${PORT}/api/pricing/:id (Protected)`
-      );
-      console.log(`   POST   http://localhost:${PORT}/api/pricing (Protected)`);
-      console.log(
-        `   PUT    http://localhost:${PORT}/api/pricing/:id (Protected)`
-      );
-      console.log(
-        `   DELETE http://localhost:${PORT}/api/pricing/:id (Protected)`
-      );
-      console.log("");
-      console.log("Booking Management:");
-      console.log(
-        `   POST   http://localhost:${PORT}/api/bookings/check-availability (Public)`
-      );
-      console.log(`   POST   http://localhost:${PORT}/api/bookings (Public)`);
-      console.log(
-        `   GET    http://localhost:${PORT}/api/bookings/:id (Public)`
-      );
-      console.log(
-        `   PATCH  http://localhost:${PORT}/api/bookings/:id/cancel (Public)`
-      );
-      console.log(
-        `   GET    http://localhost:${PORT}/api/bookings (Protected)`
-      );
-      console.log(
-        `   POST   http://localhost:${PORT}/api/bookings/manual (Protected)`
-      );
-      console.log(
-        `   PATCH  http://localhost:${PORT}/api/bookings/:id/status (Protected)`
-      );
-      console.log(
-        `   PATCH  http://localhost:${PORT}/api/bookings/:id/payment (Protected)`
-      );
-      console.log(
-        `   PUT    http://localhost:${PORT}/api/bookings/:id (Protected)`
-      );
-      console.log("");
-      console.log("Promo Code Management:");
-      console.log(
-        `   POST   http://localhost:${PORT}/api/promo-codes/validate (Public)`
-      );
-      console.log(
-        `   GET    http://localhost:${PORT}/api/promo-codes (Protected)`
-      );
-      console.log(
-        `   GET    http://localhost:${PORT}/api/promo-codes/:id (Protected)`
-      );
-      console.log(
-        `   POST   http://localhost:${PORT}/api/promo-codes (Protected)`
-      );
-      console.log(
-        `   PUT    http://localhost:${PORT}/api/promo-codes/:id (Protected)`
-      );
-      console.log(
-        `   PATCH  http://localhost:${PORT}/api/promo-codes/:id/toggle (Protected)`
-      );
-      console.log(
-        `   DELETE http://localhost:${PORT}/api/promo-codes/:id (Protected)`
-      );
-      console.log("");
     });
   } catch (error) {
     console.error("Failed to start server:", error);
