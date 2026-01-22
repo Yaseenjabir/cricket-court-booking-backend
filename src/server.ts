@@ -26,8 +26,11 @@ app.use(
       "http://localhost:8080", // Alternative dev port
       "https://www.jeddahcricketnets.com", // Production frontend
       "https://jeddahcricketnets.com", // Production frontend (without www)
+      "https://api.jeddahcricketnets.com", // API subdomain
     ],
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(express.json());
