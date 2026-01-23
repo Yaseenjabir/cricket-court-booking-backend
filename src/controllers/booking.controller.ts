@@ -52,7 +52,76 @@ export const checkAvailability = asyncHandler(
       data: result,
       message: "Availability checked successfully",
     });
-  }
+  },
+);
+
+/**
+ * Get bookings for calendar view (admin)
+ * Query params: startDate=YYYY-MM-DD, endDate=YYYY-MM-DD
+ */
+export const getCalendarBookings = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { startDate, endDate } = req.query as any;
+
+    // Determine date range (default: today)
+    let start: Date;
+    let end: Date;
+
+    if (startDate) {
+      start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+    } else {
+      start = new Date();
+      start.setHours(0, 0, 0, 0);
+    }
+
+    if (endDate) {
+      end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+    } else {
+      end = new Date(start);
+      end.setHours(23, 59, 59, 999);
+    }
+
+    // Fetch courts to create index mapping
+    const courts = await Court.find({}).sort({ name: 1 });
+    const courtIndexMap: Record<string, number> = {};
+    courts.forEach((c, idx) => {
+      courtIndexMap[c._id.toString()] = idx; // zero-based index
+    });
+
+    // Query bookings in range (exclude cancelled)
+    const bookings = await Booking.find({
+      bookingDate: { $gte: start, $lte: end },
+      status: { $ne: "cancelled" },
+    })
+      .populate("customer", "name")
+      .populate("court", "name")
+      .sort({ bookingDate: 1, startTime: 1 });
+
+    // Map to simplified calendar format expected by frontend
+    const result = bookings.map((b) => {
+      const courtId = (b.court as any)?._id?.toString?.() || (b.court as any);
+      const courtName = (b.court as any)?.name || null;
+
+      const startHour = parseInt(b.startTime.split(":")[0], 10);
+
+      return {
+        id: b._id,
+        bookingId: b._id,
+        court: courtIndexMap[courtId] ?? null,
+        courtName,
+        bookingDate: b.bookingDate,
+        startHour,
+        duration: b.durationHours,
+        customer: (b.customer as any)?.name || "Guest",
+        status: b.status,
+        amount: `${b.finalPrice ?? b.totalPrice ?? 0} SAR`,
+      };
+    });
+
+    res.json({ success: true, count: result.length, data: result });
+  },
 );
 
 /**
@@ -132,7 +201,7 @@ export const createBooking = asyncHandler(
     const pricingResult = await PricingService.calculateBookingPrice(
       bookingDate,
       startTime,
-      endTime
+      endTime,
     );
 
     // Apply promo code if provided
@@ -144,7 +213,7 @@ export const createBooking = asyncHandler(
       const promoValidation = await PromoCodeService.validatePromoCode(
         promoCode,
         customer._id.toString(),
-        pricingResult.finalPrice
+        pricingResult.finalPrice,
       );
 
       if (promoValidation.valid && promoValidation.promoCodeId) {
@@ -197,7 +266,7 @@ export const createBooking = asyncHandler(
       data: populatedBooking,
       message: "Booking created successfully",
     });
-  }
+  },
 );
 
 /**
@@ -226,7 +295,7 @@ export const createManualBooking = asyncHandler(
     // If not blocked, customer info is required
     if (!isBlocked && (!customerPhone || !customerName)) {
       throw new BadRequestError(
-        "Customer information is required for bookings"
+        "Customer information is required for bookings",
       );
     }
 
@@ -279,7 +348,7 @@ export const createManualBooking = asyncHandler(
       const pricingResult = await PricingService.calculateBookingPrice(
         bookingDate,
         startTime,
-        endTime
+        endTime,
       );
       totalPrice = pricingResult.finalPrice;
       pricingBreakdown = pricingResult.breakdown;
@@ -321,7 +390,7 @@ export const createManualBooking = asyncHandler(
         ? "Time slot blocked successfully"
         : "Manual booking created successfully",
     });
-  }
+  },
 );
 
 /**
@@ -390,7 +459,7 @@ export const getAllBookings = asyncHandler(
         },
       },
     });
-  }
+  },
 );
 
 /**
@@ -413,7 +482,7 @@ export const getBookingById = asyncHandler(
       success: true,
       data: booking,
     });
-  }
+  },
 );
 
 /**
@@ -459,7 +528,7 @@ export const updateBookingStatus = asyncHandler(
       data: populatedBooking,
       message: "Booking status updated successfully",
     });
-  }
+  },
 );
 
 /**
@@ -501,7 +570,7 @@ export const updatePayment = asyncHandler(
       data: populatedBooking,
       message: "Payment updated successfully",
     });
-  }
+  },
 );
 
 /**
@@ -535,7 +604,7 @@ export const updateBooking = asyncHandler(
       data: populatedBooking,
       message: "Booking updated successfully",
     });
-  }
+  },
 );
 
 /**
@@ -573,7 +642,7 @@ export const cancelBooking = asyncHandler(
     if (booking.promoCode && booking.customer) {
       await PromoCodeService.removeUsage(
         booking.promoCode.toString(),
-        booking.customer.toString()
+        booking.customer.toString(),
       );
     }
 
@@ -587,5 +656,5 @@ export const cancelBooking = asyncHandler(
       data: populatedBooking,
       message: "Booking cancelled successfully",
     });
-  }
+  },
 );
