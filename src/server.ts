@@ -9,6 +9,7 @@ import customerRoutes from "./routes/customer.routes";
 import pricingRoutes from "./routes/pricing.routes";
 import bookingRoutes from "./routes/booking.routes";
 import promoCodeRoutes from "./routes/promoCode.routes";
+import contactRoutes from "./routes/contact.routes";
 import { errorHandler, notFound } from "./middleware/errorHandler";
 // Load environment variables
 dotenv.config();
@@ -29,8 +30,6 @@ app.use(
       "https://api.jeddahcricketnets.com", // API subdomain
     ],
     credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 app.use(express.json());
@@ -77,6 +76,7 @@ app.use("/api/customers", customerRoutes);
 app.use("/api/pricing", pricingRoutes);
 app.use("/api/bookings", bookingRoutes);
 app.use("/api/promo-codes", promoCodeRoutes);
+app.use("/api/contact", contactRoutes);
 
 // 404 handler (must be after all routes)
 app.use(notFound);
