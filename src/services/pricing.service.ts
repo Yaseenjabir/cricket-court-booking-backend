@@ -19,11 +19,11 @@ export class PricingService {
   }
 
   /**
-   * Check if time is night slot (6 PM to 9 AM)
-   * Night: 18:00 (6 PM) to 09:00 (9 AM) next day
+   * Check if time is night slot (7 PM to 9 AM)
+   * Night: 19:00 (7 PM) to 09:00 (9 AM) next day
    */
   private static isNightTime(hour: number): boolean {
-    return hour >= 18 || hour < 9;
+    return hour >= 19 || hour < 9;
   }
 
   /**
@@ -56,6 +56,15 @@ export class PricingService {
   }
 
   /**
+   * Check if it's Thursday night (weekend night pricing: 135 SAR)
+   * Thursday night belongs to Friday which is the start of the weekend
+   */
+  private static isThursdayNight(date: Date, hour: number): boolean {
+    const effectiveDate = this.getEffectiveDate(date);
+    return this.getDayOfWeek(effectiveDate) === 4 && this.isNightTime(hour);
+  }
+
+  /**
    * Check if it's Saturday night (special pricing: 110 SAR instead of 135 SAR)
    */
   private static isSaturdayNight(date: Date, hour: number): boolean {
@@ -68,13 +77,22 @@ export class PricingService {
    */
   private static async getPrice(
     date: Date,
-    hour: number
+    hour: number,
   ): Promise<{
     price: number;
     dayType: "weekday" | "weekend";
     timeSlot: "day" | "night";
   }> {
-    // Check for Saturday night special pricing
+    // Check for Thursday night special pricing (weekend night: 135 SAR)
+    if (this.isThursdayNight(date, hour)) {
+      return {
+        price: 135,
+        dayType: "weekend",
+        timeSlot: "night",
+      };
+    }
+
+    // Check for Saturday night special pricing (weekday night: 110 SAR)
     if (this.isSaturdayNight(date, hour)) {
       return {
         price: 110,
@@ -96,7 +114,7 @@ export class PricingService {
 
     if (!pricingRule) {
       throw new BadRequestError(
-        `Pricing rule not found for ${dayType} ${timeSlot}`
+        `Pricing rule not found for ${dayType} ${timeSlot}`,
       );
     }
 
@@ -116,7 +134,7 @@ export class PricingService {
   static async calculateBookingPrice(
     bookingDate: Date | string,
     startTime: string,
-    endTime: string
+    endTime: string,
   ): Promise<{
     totalHours: number;
     breakdown: Array<{
@@ -161,7 +179,7 @@ export class PricingService {
     const minutes = (totalMilliseconds / (1000 * 60)) % 60;
     if (minutes !== 0 && minutes !== 30) {
       throw new BadRequestError(
-        "Bookings must be in 30-minute increments (e.g., 1.0h, 1.5h, 2.0h)"
+        "Bookings must be in 30-minute increments (e.g., 1.0h, 1.5h, 2.0h)",
       );
     }
 
@@ -186,7 +204,7 @@ export class PricingService {
 
       const { price, dayType, timeSlot } = await this.getPrice(
         currentTime,
-        currentTime.getHours()
+        currentTime.getHours(),
       );
 
       const slotPrice = price * slotDuration;
@@ -195,10 +213,10 @@ export class PricingService {
       // Format hour range for breakdown
       const startStr = `${String(currentTime.getHours()).padStart(
         2,
-        "0"
+        "0",
       )}:${String(currentTime.getMinutes()).padStart(2, "0")}`;
       const endStr = `${String(slotEnd.getHours()).padStart(2, "0")}:${String(
-        slotEnd.getMinutes()
+        slotEnd.getMinutes(),
       ).padStart(2, "0")}`;
 
       breakdown.push({

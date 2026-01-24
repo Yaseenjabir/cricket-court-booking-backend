@@ -40,7 +40,7 @@ export const getDashboardStats = asyncHandler(
 
     // Get court utilization percentage
     const allCourts = await Court.find({ status: "active" });
-    const totalSlots = allCourts.length * 17; // 17 hours from 9 AM to 4 AM
+    const totalSlots = allCourts.length * 19; // 19 hours from 9 AM to 4 AM (9-23=15 hours + 0-4=5 hours)
 
     const bookedSlots = await Booking.aggregate([
       {
@@ -195,7 +195,7 @@ export const getDashboardCourtUtilization = asyncHandler(
           (sum: number, b: any) => sum + (b.durationHours || 0),
           0,
         );
-        const utilization = Math.round((totalDuration / 17) * 100); // 17 hours available
+        const utilization = Math.round((totalDuration / 19) * 100); // 19 hours available
 
         return {
           court: court.name,

@@ -201,8 +201,8 @@ export class BookingService {
 
     // End time validation
     if (crossesMidnight) {
-      // End time is next day, must be before 4:00 AM
-      if (endMinutes >= operatingEnd) {
+      // End time is next day, must be at or before 4:00 AM
+      if (endMinutes > operatingEnd) {
         throw new ApiError(400, "Booking cannot end after 4:00 AM");
       }
     } else {

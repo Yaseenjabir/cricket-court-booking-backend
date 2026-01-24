@@ -22,7 +22,7 @@ export const getAllPricingRules = asyncHandler(
       count: pricingRules.length,
       data: pricingRules,
     });
-  }
+  },
 );
 
 // Get single pricing rule by ID
@@ -40,7 +40,7 @@ export const getPricingRuleById = asyncHandler(
       success: true,
       data: pricingRule,
     });
-  }
+  },
 );
 
 // Create new pricing rule
@@ -69,7 +69,7 @@ export const createPricingRule = asyncHandler(
 
     if (existingRule) {
       throw new ConflictError(
-        `Pricing rule for ${ruleData.dayType} ${ruleData.timeSlot} already exists`
+        `Pricing rule for ${ruleData.dayType} ${ruleData.timeSlot} already exists`,
       );
     }
 
@@ -80,7 +80,7 @@ export const createPricingRule = asyncHandler(
       message: "Pricing rule created successfully",
       data: pricingRule,
     });
-  }
+  },
 );
 
 // Update pricing rule
@@ -108,7 +108,7 @@ export const updatePricingRule = asyncHandler(
       message: "Pricing rule updated successfully",
       data: pricingRule,
     });
-  }
+  },
 );
 
 // Delete pricing rule
@@ -127,7 +127,7 @@ export const deletePricingRule = asyncHandler(
       message: "Pricing rule deleted successfully",
       data: pricingRule,
     });
-  }
+  },
 );
 
 // Initialize default pricing rules
@@ -139,10 +139,14 @@ export const initializePricingRules = asyncHandler(
       throw new BadRequestError("Pricing rules already initialized");
     }
 
+    // Initialize pricing rules according to client requirements:
+    // Sunday-Wednesday: Day 90 SAR, Night 110 SAR
+    // Thursday-Friday (Weekend): Day 110 SAR, Night 135 SAR
+    // Saturday: Day 110 SAR, Night 110 SAR (Weekday Night rate)
     const defaultRules = [
-      { dayType: "weekday", timeSlot: "day", pricePerHour: 80 },
-      { dayType: "weekday", timeSlot: "night", pricePerHour: 100 },
-      { dayType: "weekend", timeSlot: "day", pricePerHour: 100 },
+      { dayType: "weekday", timeSlot: "day", pricePerHour: 90 },
+      { dayType: "weekday", timeSlot: "night", pricePerHour: 110 },
+      { dayType: "weekend", timeSlot: "day", pricePerHour: 110 },
       { dayType: "weekend", timeSlot: "night", pricePerHour: 135 },
     ];
 
@@ -153,7 +157,7 @@ export const initializePricingRules = asyncHandler(
       message: "Default pricing rules initialized successfully",
       data: createdRules,
     });
-  }
+  },
 );
 
 // Calculate price for booking (public endpoint)
@@ -163,21 +167,21 @@ export const calculatePrice = asyncHandler(
 
     if (!bookingDate || !startTime || !endTime) {
       throw new BadRequestError(
-        "Booking date, start time, and end time are required"
+        "Booking date, start time, and end time are required",
       );
     }
 
     const result = await PricingService.calculateBookingPrice(
       bookingDate,
       startTime,
-      endTime
+      endTime,
     );
 
     res.json({
       success: true,
       data: result,
     });
-  }
+  },
 );
 
 // Get current pricing (public endpoint for customers)
@@ -212,5 +216,5 @@ export const getCurrentPricing = asyncHandler(
       success: true,
       data: pricing,
     });
-  }
+  },
 );
