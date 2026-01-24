@@ -11,11 +11,39 @@ export class PricingService {
   }
 
   /**
-   * Check if date is weekend (Friday or Saturday in Saudi Arabia)
+   * Get days specification for a date (sun-wed, thu, fri, sat)
    */
-  private static isWeekend(date: Date): boolean {
+  private static getDays(date: Date): "sun-wed" | "thu" | "fri" | "sat" {
     const day = this.getDayOfWeek(date);
-    return day === 5 || day === 6; // Friday = 5, Saturday = 6
+    if (day === 0 || day === 1 || day === 2 || day === 3) return "sun-wed"; // Sun-Wed
+    if (day === 4) return "thu"; // Thursday
+    if (day === 5) return "fri"; // Friday
+    return "sat"; // Saturday
+  }
+
+  /**
+   * Get category for pricing
+   */
+  private static getCategory(
+    days: "sun-wed" | "thu" | "fri" | "sat",
+    timeSlot: "day" | "night",
+  ): "weekday-day" | "weekday-night" | "weekend-day" | "weekend-night" {
+    // Sun-Wed day = weekday-day (90)
+    if (days === "sun-wed" && timeSlot === "day") return "weekday-day";
+    // Sun-Wed night = weekday-night (110)
+    if (days === "sun-wed" && timeSlot === "night") return "weekday-night";
+    // Thu day = weekday-day (90)
+    if (days === "thu" && timeSlot === "day") return "weekday-day";
+    // Thu night = weekend-night (135)
+    if (days === "thu" && timeSlot === "night") return "weekend-night";
+    // Fri day = weekend-day (110)
+    if (days === "fri" && timeSlot === "day") return "weekend-day";
+    // Fri night = weekend-night (135)
+    if (days === "fri" && timeSlot === "night") return "weekend-night";
+    // Sat day = weekend-day (110)
+    if (days === "sat" && timeSlot === "day") return "weekend-day";
+    // Sat night = weekday-night (110)
+    return "weekday-night";
   }
 
   /**
@@ -24,13 +52,6 @@ export class PricingService {
    */
   private static isNightTime(hour: number): boolean {
     return hour >= 19 || hour < 9;
-  }
-
-  /**
-   * Get day type for a specific date
-   */
-  private static getDayType(date: Date): "weekday" | "weekend" {
-    return this.isWeekend(date) ? "weekend" : "weekday";
   }
 
   /**
@@ -56,23 +77,6 @@ export class PricingService {
   }
 
   /**
-   * Check if it's Thursday night (weekend night pricing: 135 SAR)
-   * Thursday night belongs to Friday which is the start of the weekend
-   */
-  private static isThursdayNight(date: Date, hour: number): boolean {
-    const effectiveDate = this.getEffectiveDate(date);
-    return this.getDayOfWeek(effectiveDate) === 4 && this.isNightTime(hour);
-  }
-
-  /**
-   * Check if it's Saturday night (special pricing: 110 SAR instead of 135 SAR)
-   */
-  private static isSaturdayNight(date: Date, hour: number): boolean {
-    const effectiveDate = this.getEffectiveDate(date);
-    return this.getDayOfWeek(effectiveDate) === 6 && this.isNightTime(hour);
-  }
-
-  /**
    * Get price for a specific time slot
    */
   private static async getPrice(
@@ -80,47 +84,32 @@ export class PricingService {
     hour: number,
   ): Promise<{
     price: number;
-    dayType: "weekday" | "weekend";
+    days: "sun-wed" | "thu" | "fri" | "sat";
+    category: "weekday-day" | "weekday-night" | "weekend-day" | "weekend-night";
     timeSlot: "day" | "night";
   }> {
-    // Check for Thursday night special pricing (weekend night: 135 SAR)
-    if (this.isThursdayNight(date, hour)) {
-      return {
-        price: 135,
-        dayType: "weekend",
-        timeSlot: "night",
-      };
-    }
-
-    // Check for Saturday night special pricing (weekday night: 110 SAR)
-    if (this.isSaturdayNight(date, hour)) {
-      return {
-        price: 110,
-        dayType: "weekend",
-        timeSlot: "night",
-      };
-    }
-
     const effectiveDate = this.getEffectiveDate(date);
-    const dayType = this.getDayType(effectiveDate);
+    const days = this.getDays(effectiveDate);
     const timeSlot = this.getTimeSlot(hour);
+    const category = this.getCategory(days, timeSlot);
 
     // Fetch pricing rule from database
     const pricingRule = await PricingRule.findOne({
-      dayType,
+      days,
       timeSlot,
       isActive: true,
     });
 
     if (!pricingRule) {
       throw new BadRequestError(
-        `Pricing rule not found for ${dayType} ${timeSlot}`,
+        `Pricing rule not found for ${days} ${timeSlot}`,
       );
     }
 
     return {
       price: pricingRule.pricePerHour,
-      dayType,
+      days,
+      category,
       timeSlot,
     };
   }
@@ -140,7 +129,12 @@ export class PricingService {
     breakdown: Array<{
       hour: string;
       rate: number;
-      dayType: "weekday" | "weekend";
+      days: "sun-wed" | "thu" | "fri" | "sat";
+      category:
+        | "weekday-day"
+        | "weekday-night"
+        | "weekend-day"
+        | "weekend-night";
       timeSlot: "day" | "night";
     }>;
     finalPrice: number;
@@ -186,7 +180,12 @@ export class PricingService {
     const breakdown: Array<{
       hour: string;
       rate: number;
-      dayType: "weekday" | "weekend";
+      days: "sun-wed" | "thu" | "fri" | "sat";
+      category:
+        | "weekday-day"
+        | "weekday-night"
+        | "weekend-day"
+        | "weekend-night";
       timeSlot: "day" | "night";
     }> = [];
     let currentTime = new Date(startDateTime);
@@ -202,7 +201,7 @@ export class PricingService {
       const slotDuration =
         (slotEnd.getTime() - currentTime.getTime()) / (1000 * 60 * 60);
 
-      const { price, dayType, timeSlot } = await this.getPrice(
+      const { price, days, category, timeSlot } = await this.getPrice(
         currentTime,
         currentTime.getHours(),
       );
@@ -222,7 +221,8 @@ export class PricingService {
       breakdown.push({
         hour: `${startStr}-${endStr}`,
         rate: price,
-        dayType,
+        days,
+        category,
         timeSlot,
       });
 

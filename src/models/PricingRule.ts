@@ -5,15 +5,20 @@ interface IPricingRuleDocument extends IPricingRule, Document {}
 
 const pricingRuleSchema = new Schema<IPricingRuleDocument>(
   {
-    dayType: {
+    days: {
       type: String,
-      enum: ["weekday", "weekend"],
-      required: [true, "Day type is required"],
+      enum: ["sun-wed", "thu", "fri", "sat"],
+      required: [true, "Days specification is required"],
     },
     timeSlot: {
       type: String,
       enum: ["day", "night"],
       required: [true, "Time slot is required"],
+    },
+    category: {
+      type: String,
+      enum: ["weekday-day", "weekday-night", "weekend-day", "weekend-night"],
+      required: [true, "Category is required"],
     },
     pricePerHour: {
       type: Number,
@@ -35,15 +40,15 @@ const pricingRuleSchema = new Schema<IPricingRuleDocument>(
         return ret;
       },
     },
-  }
+  },
 );
 
 // Compound unique index to prevent duplicate rules
-pricingRuleSchema.index({ dayType: 1, timeSlot: 1 }, { unique: true });
+pricingRuleSchema.index({ days: 1, timeSlot: 1 }, { unique: true });
 
 const PricingRule = mongoose.model<IPricingRuleDocument>(
   "PricingRule",
-  pricingRuleSchema
+  pricingRuleSchema,
 );
 
 export default PricingRule;

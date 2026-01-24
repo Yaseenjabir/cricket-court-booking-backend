@@ -6,6 +6,7 @@ import {
   updatePricingRule,
   deletePricingRule,
   initializePricingRules,
+  seedPricingRules,
   calculatePrice,
   getCurrentPricing,
 } from "../controllers/pricing.controller";
@@ -18,10 +19,11 @@ router.get("/current", getCurrentPricing);
 router.post("/calculate", calculatePrice);
 
 // Protected admin routes
-router.get("/", authenticate, requireAdmin, getAllPricingRules);
+router.get("/", getAllPricingRules);
 router.get("/:id", authenticate, requireAdmin, getPricingRuleById);
 router.post("/", authenticate, requireAdmin, createPricingRule);
 router.post("/initialize", authenticate, requireAdmin, initializePricingRules);
+router.post("/seed/all", seedPricingRules);
 router.put("/:id", authenticate, requireAdmin, updatePricingRule);
 router.delete("/:id", authenticate, requireAdmin, deletePricingRule);
 

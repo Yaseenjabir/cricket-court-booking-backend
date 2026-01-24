@@ -7,8 +7,7 @@ import {
 } from "../types/booking.types";
 
 export interface IBookingDocument
-  extends Omit<IBooking, "customer" | "court" | "promoCode">,
-    Document {
+  extends Omit<IBooking, "customer" | "court" | "promoCode">, Document {
   customer?: mongoose.Types.ObjectId;
   court: mongoose.Types.ObjectId;
   promoCode?: mongoose.Types.ObjectId;
@@ -24,9 +23,14 @@ const PricingBreakdownSchema = new Schema(
       type: Number,
       required: true,
     },
-    dayType: {
+    days: {
       type: String,
-      enum: ["weekday", "weekend"],
+      enum: ["sun-wed", "thu", "fri", "sat"],
+      required: true,
+    },
+    category: {
+      type: String,
+      enum: ["weekday-day", "weekday-night", "weekend-day", "weekend-night"],
       required: true,
     },
     timeSlot: {
@@ -35,7 +39,7 @@ const PricingBreakdownSchema = new Schema(
       required: true,
     },
   },
-  { _id: false }
+  { _id: false },
 );
 
 const BookingSchema = new Schema<IBookingDocument>(
@@ -139,7 +143,7 @@ const BookingSchema = new Schema<IBookingDocument>(
   },
   {
     timestamps: true,
-  }
+  },
 );
 
 // Compound index for efficient availability queries

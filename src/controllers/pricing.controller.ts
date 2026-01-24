@@ -13,7 +13,7 @@ import { PricingService } from "../services/pricing.service";
 export const getAllPricingRules = asyncHandler(
   async (req: Request, res: Response) => {
     const pricingRules = await PricingRule.find().sort({
-      dayType: 1,
+      days: 1,
       timeSlot: 1,
     });
 
@@ -49,27 +49,37 @@ export const createPricingRule = asyncHandler(
     const ruleData: IPricingRuleCreate = req.body;
 
     // Validate required fields
-    if (!ruleData.dayType) {
-      throw new BadRequestError("Day type is required");
+    if (!ruleData.days) {
+      throw new BadRequestError("Days specification is required");
     }
 
     if (!ruleData.timeSlot) {
       throw new BadRequestError("Time slot is required");
     }
 
+    if (!ruleData.category) {
+      throw new BadRequestError("Category is required");
+    }
+
     if (!ruleData.pricePerHour || ruleData.pricePerHour <= 0) {
       throw new BadRequestError("Valid price per hour is required");
     }
 
+    // Check total count (max 8 rules)
+    const totalRules = await PricingRule.countDocuments();
+    if (totalRules >= 8) {
+      throw new BadRequestError("Maximum of 8 pricing rules allowed");
+    }
+
     // Check if rule already exists
     const existingRule = await PricingRule.findOne({
-      dayType: ruleData.dayType,
+      days: ruleData.days,
       timeSlot: ruleData.timeSlot,
     });
 
     if (existingRule) {
       throw new ConflictError(
-        `Pricing rule for ${ruleData.dayType} ${ruleData.timeSlot} already exists`,
+        `Pricing rule for ${ruleData.days} ${ruleData.timeSlot} already exists`,
       );
     }
 
@@ -139,15 +149,56 @@ export const initializePricingRules = asyncHandler(
       throw new BadRequestError("Pricing rules already initialized");
     }
 
-    // Initialize pricing rules according to client requirements:
-    // Sunday-Wednesday: Day 90 SAR, Night 110 SAR
-    // Thursday-Friday (Weekend): Day 110 SAR, Night 135 SAR
-    // Saturday: Day 110 SAR, Night 110 SAR (Weekday Night rate)
+    // Initialize 8 pricing rules as per client requirements
     const defaultRules = [
-      { dayType: "weekday", timeSlot: "day", pricePerHour: 90 },
-      { dayType: "weekday", timeSlot: "night", pricePerHour: 110 },
-      { dayType: "weekend", timeSlot: "day", pricePerHour: 110 },
-      { dayType: "weekend", timeSlot: "night", pricePerHour: 135 },
+      {
+        days: "sun-wed",
+        timeSlot: "day",
+        category: "weekday-day",
+        pricePerHour: 90,
+      },
+      {
+        days: "sun-wed",
+        timeSlot: "night",
+        category: "weekday-night",
+        pricePerHour: 110,
+      },
+      {
+        days: "thu",
+        timeSlot: "day",
+        category: "weekday-day",
+        pricePerHour: 90,
+      },
+      {
+        days: "thu",
+        timeSlot: "night",
+        category: "weekend-night",
+        pricePerHour: 135,
+      },
+      {
+        days: "fri",
+        timeSlot: "day",
+        category: "weekend-day",
+        pricePerHour: 110,
+      },
+      {
+        days: "fri",
+        timeSlot: "night",
+        category: "weekend-night",
+        pricePerHour: 135,
+      },
+      {
+        days: "sat",
+        timeSlot: "day",
+        category: "weekend-day",
+        pricePerHour: 110,
+      },
+      {
+        days: "sat",
+        timeSlot: "night",
+        category: "weekday-night",
+        pricePerHour: 110,
+      },
     ];
 
     const createdRules = await PricingRule.insertMany(defaultRules);
@@ -155,6 +206,74 @@ export const initializePricingRules = asyncHandler(
     res.status(201).json({
       success: true,
       message: "Default pricing rules initialized successfully",
+      data: createdRules,
+    });
+  },
+);
+
+// Seed pricing rules (Development endpoint - deletes existing and creates fresh)
+export const seedPricingRules = asyncHandler(
+  async (req: Request, res: Response) => {
+    // Delete all existing rules first
+    await PricingRule.deleteMany({});
+
+    // Create 8 default pricing rules
+    const defaultRules = [
+      {
+        days: "sun-wed",
+        timeSlot: "day",
+        category: "weekday-day",
+        pricePerHour: 90,
+      },
+      {
+        days: "sun-wed",
+        timeSlot: "night",
+        category: "weekday-night",
+        pricePerHour: 110,
+      },
+      {
+        days: "thu",
+        timeSlot: "day",
+        category: "weekday-day",
+        pricePerHour: 90,
+      },
+      {
+        days: "thu",
+        timeSlot: "night",
+        category: "weekend-night",
+        pricePerHour: 135,
+      },
+      {
+        days: "fri",
+        timeSlot: "day",
+        category: "weekend-day",
+        pricePerHour: 110,
+      },
+      {
+        days: "fri",
+        timeSlot: "night",
+        category: "weekend-night",
+        pricePerHour: 135,
+      },
+      {
+        days: "sat",
+        timeSlot: "day",
+        category: "weekend-day",
+        pricePerHour: 110,
+      },
+      {
+        days: "sat",
+        timeSlot: "night",
+        category: "weekday-night",
+        pricePerHour: 110,
+      },
+    ];
+
+    const createdRules = await PricingRule.insertMany(defaultRules);
+
+    res.status(201).json({
+      success: true,
+      message: `Successfully seeded ${createdRules.length} pricing rules`,
       data: createdRules,
     });
   },
@@ -188,7 +307,7 @@ export const calculatePrice = asyncHandler(
 export const getCurrentPricing = asyncHandler(
   async (req: Request, res: Response) => {
     const pricingRules = await PricingRule.find().sort({
-      dayType: 1,
+      days: 1,
       timeSlot: 1,
     });
 
@@ -201,13 +320,29 @@ export const getCurrentPricing = asyncHandler(
     };
 
     pricingRules.forEach((rule) => {
-      if (rule.dayType === "weekday" && rule.timeSlot === "day") {
+      // Get weekday day rate (Sun-Wed or Thu day)
+      if (rule.category === "weekday-day" && pricing.weekdayDayRate === 0) {
         pricing.weekdayDayRate = rule.pricePerHour;
-      } else if (rule.dayType === "weekday" && rule.timeSlot === "night") {
+      }
+      // Get weekday night rate (Sun-Wed night or Sat night)
+      else if (
+        rule.category === "weekday-night" &&
+        pricing.weekdayNightRate === 0
+      ) {
         pricing.weekdayNightRate = rule.pricePerHour;
-      } else if (rule.dayType === "weekend" && rule.timeSlot === "day") {
+      }
+      // Get weekend day rate (Fri or Sat day)
+      else if (
+        rule.category === "weekend-day" &&
+        pricing.weekendDayRate === 0
+      ) {
         pricing.weekendDayRate = rule.pricePerHour;
-      } else if (rule.dayType === "weekend" && rule.timeSlot === "night") {
+      }
+      // Get weekend night rate (Thu or Fri night)
+      else if (
+        rule.category === "weekend-night" &&
+        pricing.weekendNightRate === 0
+      ) {
         pricing.weekendNightRate = rule.pricePerHour;
       }
     });

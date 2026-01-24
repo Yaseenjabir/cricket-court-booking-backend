@@ -1,6 +1,7 @@
 export interface IPricingRule {
-  dayType: "weekday" | "weekend";
+  days: "sun-wed" | "thu" | "fri" | "sat";
   timeSlot: "day" | "night";
+  category: "weekday-day" | "weekday-night" | "weekend-day" | "weekend-night";
   pricePerHour: number;
   isActive: boolean;
   createdAt?: Date;
@@ -8,15 +9,17 @@ export interface IPricingRule {
 }
 
 export interface IPricingRuleCreate {
-  dayType: "weekday" | "weekend";
+  days: "sun-wed" | "thu" | "fri" | "sat";
   timeSlot: "day" | "night";
+  category: "weekday-day" | "weekday-night" | "weekend-day" | "weekend-night";
   pricePerHour: number;
   isActive?: boolean;
 }
 
 export interface IPricingRuleUpdate {
-  dayType?: "weekday" | "weekend";
+  days?: "sun-wed" | "thu" | "fri" | "sat";
   timeSlot?: "day" | "night";
+  category?: "weekday-day" | "weekday-night" | "weekend-day" | "weekend-night";
   pricePerHour?: number;
   isActive?: boolean;
 }
@@ -27,7 +30,8 @@ export interface ITimeSlotPrice {
   hours: number;
   pricePerHour: number;
   totalPrice: number;
-  dayType: "weekday" | "weekend";
+  days: "sun-wed" | "thu" | "fri" | "sat";
+  category: "weekday-day" | "weekday-night" | "weekend-day" | "weekend-night";
   timeSlot: "day" | "night";
 }
 
