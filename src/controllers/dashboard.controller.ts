@@ -173,8 +173,6 @@ export const getDashboardCourtUtilization = asyncHandler(
     const { date } = req.query;
     const targetDate = date ? new Date(date as string) : new Date();
 
-    console.log("Target Date:", targetDate);
-
     const dayStart = startOfDay(targetDate);
     const dayEnd = endOfDay(targetDate);
 

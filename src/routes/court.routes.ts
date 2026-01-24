@@ -6,6 +6,7 @@ import {
   updateCourt,
   deleteCourt,
   toggleCourtStatus,
+  seedCourts,
 } from "../controllers/court.controller";
 import { authenticate, requireAdmin } from "../middleware/auth.middleware";
 import { upload } from "../middleware/upload";
@@ -33,5 +34,8 @@ router.put(
 );
 router.delete("/:id", authenticate, requireAdmin, deleteCourt);
 router.patch("/:id/status", authenticate, requireAdmin, toggleCourtStatus);
+
+// Development/Seed route
+router.post("/seed/all", seedCourts);
 
 export default router;

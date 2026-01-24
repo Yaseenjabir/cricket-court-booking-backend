@@ -218,3 +218,125 @@ export const toggleCourtStatus = asyncHandler(
     });
   },
 );
+
+// Seed 7 courts (Development endpoint)
+export const seedCourts = asyncHandler(async (req: Request, res: Response) => {
+  // Delete all existing courts first
+  await Court.deleteMany({});
+
+  const courtsData = [
+    {
+      name: "Court 1",
+      description:
+        "Premium cricket net with professional-grade facilities and excellent lighting for day and night sessions.",
+      status: "active",
+      features: [
+        "Professional Turf",
+        "LED Floodlights",
+        "Bowling Machine",
+        "Video Analysis",
+        "Climate Controlled",
+      ],
+      imageUrl:
+        "https://images.unsplash.com/photo-1531415074968-036ba1b575da?w=800&h=600&fit=crop",
+    },
+    {
+      name: "Court 2",
+      description:
+        "High-quality practice court with advanced bowling machine and video recording facilities.",
+      status: "active",
+      features: [
+        "Synthetic Turf",
+        "LED Lights",
+        "Bowling Machine",
+        "Sound System",
+        "Water Dispenser",
+      ],
+      imageUrl:
+        "https://images.unsplash.com/photo-1624526267942-ab0ff8a3e972?w=800&h=600&fit=crop",
+    },
+    {
+      name: "Court 3",
+      description:
+        "Standard cricket practice facility perfect for individual training and small group sessions.",
+      status: "active",
+      features: [
+        "Quality Turf",
+        "Good Lighting",
+        "Equipment Storage",
+        "Seating Area",
+        "Wi-Fi",
+      ],
+      imageUrl:
+        "https://images.unsplash.com/photo-1540747913346-19e32dc3e97e?w=800&h=600&fit=crop",
+    },
+    {
+      name: "Court 4",
+      description:
+        "Modern cricket net with excellent facilities for batting practice and technique improvement.",
+      status: "active",
+      features: [
+        "Premium Surface",
+        "Bright Lighting",
+        "Training Equipment",
+        "First Aid Kit",
+        "Changing Room Access",
+      ],
+      imageUrl:
+        "https://images.unsplash.com/photo-1593766787879-e8c78e09cec4?w=800&h=600&fit=crop",
+    },
+    {
+      name: "Court 5",
+      description:
+        "Well-maintained practice court suitable for all skill levels with comfortable amenities.",
+      status: "active",
+      features: [
+        "Good Turf Quality",
+        "LED Lighting",
+        "Practice Equipment",
+        "Cooling System",
+        "Parking Nearby",
+      ],
+      imageUrl:
+        "https://images.unsplash.com/photo-1589487391730-58f20eb2c308?w=800&h=600&fit=crop",
+    },
+    {
+      name: "Court 6",
+      description:
+        "Spacious cricket net with modern facilities ideal for coaching sessions and team practice.",
+      status: "active",
+      features: [
+        "Large Practice Area",
+        "Excellent Lighting",
+        "Coaching Board",
+        "Spectator Seating",
+        "Refreshments Available",
+      ],
+      imageUrl:
+        "https://images.unsplash.com/photo-1512719994953-eabf50895df7?w=800&h=600&fit=crop",
+    },
+    {
+      name: "Court 7",
+      description:
+        "Top-tier cricket practice facility with state-of-the-art equipment and premium amenities.",
+      status: "active",
+      features: [
+        "Premium Facilities",
+        "Advanced Lighting",
+        "Professional Equipment",
+        "VIP Lounge Access",
+        "Complimentary Drinks",
+      ],
+      imageUrl:
+        "https://images.unsplash.com/photo-1546608235-3310a2494cdf?w=800&h=600&fit=crop",
+    },
+  ];
+
+  const courts = await Court.insertMany(courtsData);
+
+  res.status(201).json({
+    success: true,
+    message: `Successfully seeded ${courts.length} courts`,
+    data: courts,
+  });
+});
